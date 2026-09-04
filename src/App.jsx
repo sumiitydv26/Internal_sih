@@ -29,7 +29,7 @@ export default function App() {
         {/* Content Container */}
         <main
           className={`flex-1 w-full transition-all overflow-x-hidden ${
-            isWorkspace || currentView === 'admin'
+            isWorkspace
               ? 'max-w-7xl mx-auto pt-20 sm:pt-24 px-4 sm:px-6 lg:px-8 pb-20 md:pb-12'
               : ''
           }`}

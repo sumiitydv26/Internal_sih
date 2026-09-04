@@ -34,8 +34,33 @@ export default function AdminLoginGate() {
   };
 
   return (
-    <div className="w-full min-h-[85vh] flex items-center justify-center p-4 sm:p-6 overflow-x-hidden">
-      <div className="w-full max-w-lg bg-surface-container-lowest rounded-3xl p-6 sm:p-8 shadow-2xl border border-outline-variant/30 flex flex-col relative overflow-hidden animate-fadeIn">
+    <div className="relative w-full min-h-screen flex items-center justify-center p-4 sm:p-6 pt-20 sm:pt-24 pb-12 overflow-hidden">
+      {/* Background Video of Farmer with Tractor on Field */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          poster="https://lh3.googleusercontent.com/aida-public/AB6AXuAKHgwx0DuNJsJkY2RILkTWYqwm0jl2o34xFmRyZkTTNJpcDw3jXMvcDwE9K_NPHZhfN95fcGfeOuIb4Yvl69vPJsckFovKe6x6s05zeeR_w2bdCkuKMh3ABi4V0oSAknytEQrHsw6-YMRap2S-0rchYbMfH_WD6EE6Tb-Sv04jAJZWd03JK07ySvs22YXMO81Cbpf0QoB76ppR-Kctq2s2A4LkHHFuuXM05IK5lM1cddP2k54qAOFN"
+          className="w-full h-full object-cover scale-105 filter brightness-[0.72] contrast-[1.08]"
+        >
+          <source src="./videos/tractor_field.webm" type="video/webm" />
+          <source src="./videos/tractor_field_aerial.webm" type="video/webm" />
+          <source src="https://upload.wikimedia.org/wikipedia/commons/transcoded/9/96/John_Deere_tractor_when_plowing_a_field.webm/John_Deere_tractor_when_plowing_a_field.webm.480p.vp9.webm" type="video/webm" />
+        </video>
+        {/* Soft Vignette & Agricultural Dark Tint Overlay for Optimal Readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-primary/55 to-black/75 backdrop-blur-[1px]"></div>
+      </div>
+
+      {/* Floating Badge */}
+      <div className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 z-10 hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 backdrop-blur-md text-white text-xs font-semibold border border-white/20 shadow-lg">
+        <span className="w-2 h-2 rounded-full bg-secondary-fixed animate-ping"></span>
+        <span>Empowering Indian Farmers & Mechanized Agriculture</span>
+      </div>
+
+      {/* Login Card on top of video */}
+      <div className="relative z-10 w-full max-w-lg bg-surface/95 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-white/30 flex flex-col overflow-hidden animate-fadeIn">
         {/* Top Decorative Header Accent */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-secondary to-primary"></div>
 
