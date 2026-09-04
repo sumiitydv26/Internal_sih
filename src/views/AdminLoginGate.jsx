@@ -1,11 +1,13 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { REGIONAL_ACCOUNTS } from '../data/regionalData';
 import Icon from '../components/Icon';
 
 export default function AdminLoginGate() {
   const { loginAdmin, navigateTo } = useApp();
+  const [selectedProfile, setSelectedProfile] = useState('super_admin');
   const [adminId, setAdminId] = useState('admin@annapurna.gov.in');
-  const [passkey, setPasskey] = useState('');
+  const [passkey, setPasskey] = useState('admin2026');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -16,38 +18,71 @@ export default function AdminLoginGate() {
     setIsVerifying(true);
 
     setTimeout(() => {
-      const success = loginAdmin(passkey);
-      if (!success) {
-        setErrorMsg('Access Denied: Invalid administrator security key. Please check your credentials.');
+      const result = loginAdmin(adminId, passkey);
+      if (!result.success) {
+        setErrorMsg(result.message || 'Access Denied: Invalid credentials.');
         setIsVerifying(false);
       }
     }, 400);
   };
 
-  const handleQuickDemoFill = () => {
-    setPasskey('admin2026');
+  const handleSelectAccount = (acc) => {
+    setSelectedProfile(acc.id);
+    setAdminId(acc.email);
+    setPasskey(acc.passkey);
     setErrorMsg('');
   };
 
   return (
     <div className="w-full min-h-[85vh] flex items-center justify-center p-4 sm:p-6 overflow-x-hidden">
-      <div className="w-full max-w-md bg-surface-container-lowest rounded-3xl p-6 sm:p-8 shadow-2xl border border-outline-variant/30 flex flex-col relative overflow-hidden animate-fadeIn">
+      <div className="w-full max-w-lg bg-surface-container-lowest rounded-3xl p-6 sm:p-8 shadow-2xl border border-outline-variant/30 flex flex-col relative overflow-hidden animate-fadeIn">
         {/* Top Decorative Header Accent */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-secondary to-primary"></div>
 
         {/* Security Shield Icon */}
-        <div className="flex flex-col items-center text-center mb-6">
+        <div className="flex flex-col items-center text-center mb-5">
           <div className="w-14 h-14 rounded-2xl bg-primary-container/30 border border-primary/30 text-primary flex items-center justify-center mb-3 shadow-inner">
             <Icon name="admin_panel_settings" className="w-7 h-7 text-primary" />
           </div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-extrabold uppercase tracking-wider mb-2">
             <Icon name="lock" className="w-3.5 h-3.5 text-primary" />
-            <span>Restricted Gateway</span>
+            <span>Multi-Tier Regional & Admin Gateway</span>
           </div>
-          <h1 className="text-2xl font-extrabold text-on-surface tracking-tight">Admin Authentication</h1>
-          <p className="text-xs text-on-surface-variant mt-1 max-w-xs">
-            Enter your administrative master passkey to access network-wide telemetry, audits, and corridor controls.
+          <h1 className="text-2xl font-extrabold text-on-surface tracking-tight">Admin & Regional Authentication</h1>
+          <p className="text-xs text-on-surface-variant mt-1 max-w-sm">
+            Regional data is strictly protected. Log in with specific Regional Officer credentials to access that territory, or with National Super Admin for full network oversight.
           </p>
+        </div>
+
+        {/* Quick Regional Credentials Selector */}
+        <div className="mb-5 bg-surface-container-low p-3.5 rounded-2xl border border-outline-variant/20">
+          <div className="flex items-center justify-between text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2.5">
+            <span>Select Credential Profile (1-Click Fill):</span>
+            <span className="text-secondary font-mono">Demo Mode</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {REGIONAL_ACCOUNTS.map(acc => {
+              const isSelected = selectedProfile === acc.id;
+              return (
+                <button
+                  key={acc.id}
+                  type="button"
+                  className={`p-2 rounded-xl text-left transition-all border flex flex-col justify-between ${
+                    isSelected
+                      ? 'bg-primary-container/30 border-primary text-primary shadow-sm ring-1 ring-primary'
+                      : 'bg-surface-container-lowest border-outline-variant/30 text-on-surface hover:border-outline'
+                  }`}
+                  onClick={() => handleSelectAccount(acc)}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-extrabold truncate">{acc.badge}</span>
+                    {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span>}
+                  </div>
+                  <span className="text-[10px] text-on-surface-variant font-mono truncate block">{acc.passkey}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Error Notification */}
@@ -62,14 +97,14 @@ export default function AdminLoginGate() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-bold text-on-surface-variant block mb-1.5">
-              Administrator ID / Service Email
+              Administrator ID / Regional Officer Email
             </label>
             <div className="relative flex items-center">
               <Icon name="person" className="w-4 h-4 text-on-surface-variant absolute left-3 pointer-events-none" />
               <input
                 type="text"
                 value={adminId}
-                onChange={(e) => setAdminId(e.target.value)}
+                onChange={(e) => { setAdminId(e.target.value); setSelectedProfile(''); }}
                 required
                 className="w-full bg-surface-container-low pl-9 pr-3 py-2 rounded-xl text-xs text-on-surface border border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 placeholder="admin@annapurna.gov.in"
@@ -80,16 +115,11 @@ export default function AdminLoginGate() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold text-on-surface-variant">
-                Master Security Key
+                Security Passkey
               </label>
-              <button
-                type="button"
-                onClick={handleQuickDemoFill}
-                className="text-[11px] text-secondary hover:text-primary font-bold hover:underline cursor-pointer"
-                title="Auto-fill default passkey for testing"
-              >
-                Auto-fill: <code className="font-mono bg-surface-container px-1 py-0.5 rounded">admin2026</code>
-              </button>
+              <span className="text-[10px] text-on-surface-variant">
+                Authorized credentials only
+              </span>
             </div>
             <div className="relative flex items-center">
               <Icon name="lock" className="w-4 h-4 text-on-surface-variant absolute left-3 pointer-events-none" />
@@ -115,17 +145,17 @@ export default function AdminLoginGate() {
           <button
             type="submit"
             disabled={isVerifying}
-            className="w-full bg-primary hover:bg-primary/90 text-on-primary font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all text-sm active:scale-[0.99] disabled:opacity-75"
+            className="w-full bg-primary hover:bg-primary/90 text-on-primary font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all text-sm active:scale-[0.99] disabled:opacity-75 cursor-pointer"
           >
             {isVerifying ? (
               <>
                 <Icon name="refresh" className="w-4 h-4 animate-spin text-white" />
-                <span>Verifying Credentials...</span>
+                <span>Verifying Clearance...</span>
               </>
             ) : (
               <>
                 <Icon name="verified_user" className="w-4 h-4 text-white" />
-                <span>Verify & Unlock Portal</span>
+                <span>Authorize & Enter Command Center</span>
               </>
             )}
           </button>
@@ -135,13 +165,13 @@ export default function AdminLoginGate() {
         <div className="mt-6 pt-4 border-t border-surface-variant/40 flex items-center justify-between text-xs">
           <button
             onClick={() => navigateTo('landing')}
-            className="text-on-surface-variant hover:text-primary font-semibold flex items-center gap-1.5 transition-colors"
+            className="text-on-surface-variant hover:text-primary font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Icon name="arrow_forward" className="w-3.5 h-3.5 rotate-180" />
             <span>Return to Public Site</span>
           </button>
           <span className="text-[10px] text-on-surface-variant font-mono">
-            SSL 256-Bit Encrypted
+            Encrypted RBAC Session
           </span>
         </div>
       </div>

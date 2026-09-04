@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { REGIONAL_ACCOUNTS, REGIONS_DATA } from '../data/regionalData';
 
 const AppContext = createContext();
 
@@ -414,24 +415,87 @@ export function AppProvider({ children }) {
     };
   }, []);
 
-  // Admin Authentication State for Protected Link Gateway
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
-    return sessionStorage.getItem('annapurna_admin_auth') === 'true';
+  // Regional & Super Admin Authentication State
+  const [adminSession, setAdminSession] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('annapurna_admin_session');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
-  const loginAdmin = (enteredKey) => {
-    const validKeys = ['admin2026', 'agrichain2026', 'admin'];
-    if (validKeys.includes(enteredKey.trim().toLowerCase())) {
-      setIsAdminAuthenticated(true);
-      sessionStorage.setItem('annapurna_admin_auth', 'true');
+  const isAdminAuthenticated = !!adminSession;
+
+  const loginAdmin = (identifier, passkey) => {
+    const idClean = (identifier || '').trim().toLowerCase();
+    const keyClean = (passkey || '').trim().toLowerCase();
+
+    // Match against regional and super admin accounts
+    const matched = REGIONAL_ACCOUNTS.find(acc => {
+      const passMatches = acc.passkey.toLowerCase() === keyClean || (acc.id === 'super_admin' && (keyClean === 'admin2026' || keyClean === 'agrichain2026' || keyClean === 'admin'));
+      if (!passMatches) return false;
+
+      // If an identifier/email was provided, match against email, username, or id
+      if (idClean) {
+        return (
+          acc.email.toLowerCase() === idClean ||
+          acc.username.toLowerCase() === idClean ||
+          acc.id.toLowerCase() === idClean ||
+          idClean === 'admin'
+        );
+      }
       return true;
+    });
+
+    if (matched) {
+      const sessionObj = {
+        ...matched,
+        unlockedRegions: matched.scope === 'ALL' ? Object.keys(REGIONS_DATA) : [matched.assignedRegion],
+        authenticatedAt: new Date().toISOString()
+      };
+      setAdminSession(sessionObj);
+      sessionStorage.setItem('annapurna_admin_session', JSON.stringify(sessionObj));
+
+      if (matched.scope !== 'ALL' && REGIONS_DATA[matched.assignedRegion]) {
+        setActiveCluster(matched.assignedRegion);
+      }
+      return { success: true, account: sessionObj };
     }
-    return false;
+
+    return { success: false, message: 'Access Denied: Invalid administrator credentials or security key.' };
+  };
+
+  const unlockRegion = (regionName, enteredPasskey) => {
+    if (!adminSession) return { success: false, message: 'Not authenticated.' };
+
+    if (adminSession.scope === 'ALL' || adminSession.unlockedRegions?.includes(regionName)) {
+      setActiveCluster(regionName);
+      return { success: true };
+    }
+
+    const keyClean = (enteredPasskey || '').trim().toLowerCase();
+    const regionInfo = REGIONS_DATA[regionName];
+
+    if (regionInfo && (regionInfo.passkey.toLowerCase() === keyClean || keyClean === 'admin2026')) {
+      const updated = {
+        ...adminSession,
+        unlockedRegions: [...(adminSession.unlockedRegions || []), regionName]
+      };
+      setAdminSession(updated);
+      sessionStorage.setItem('annapurna_admin_session', JSON.stringify(updated));
+      setActiveCluster(regionName);
+      return { success: true };
+    }
+
+    return { success: false, message: `Access Denied: Invalid security passkey for ${regionName}.` };
   };
 
   const logoutAdmin = () => {
-    setIsAdminAuthenticated(false);
+    setAdminSession(null);
+    sessionStorage.removeItem('annapurna_admin_session');
     sessionStorage.removeItem('annapurna_admin_auth');
+    setActiveCluster('Nashik Cluster (MH-15)');
     navigateTo('landing');
   };
 
@@ -577,8 +641,13 @@ export function AppProvider({ children }) {
         setInspectingBatch,
         isAdminAuthenticated,
         setIsAdminAuthenticated,
+        adminSession,
+        setAdminSession,
         loginAdmin,
+        unlockRegion,
         logoutAdmin,
+        REGIONS_DATA,
+        REGIONAL_ACCOUNTS,
         resetDemoData
       }}
     >

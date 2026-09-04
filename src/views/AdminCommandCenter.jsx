@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { REGIONS_DATA } from '../data/regionalData';
 import Icon from '../components/Icon';
 
 export default function AdminCommandCenter() {
-  const { auditLogs, produceList, activeCluster, setActiveCluster, navigateTo, logoutAdmin } = useApp();
+  const {
+    auditLogs,
+    produceList,
+    activeCluster,
+    setActiveCluster,
+    navigateTo,
+    logoutAdmin,
+    adminSession,
+    unlockRegion
+  } = useApp();
+
   const [liveVehiclePos, setLiveVehiclePos] = useState(42);
+  const [challengeModal, setChallengeModal] = useState(null); // { targetRegion, passkeyInput: '', error: '' }
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -13,7 +25,42 @@ export default function AdminCommandCenter() {
     return () => clearInterval(timer);
   }, []);
 
-  const totalInventoryTonnes = produceList.reduce((sum, p) => sum + (p.availableVolume || 0), 0);
+  const currentRegion = REGIONS_DATA[activeCluster] || REGIONS_DATA["Nashik Cluster (MH-15)"];
+  const isSuperAdmin = adminSession?.scope === 'ALL';
+
+  const isRegionUnlocked = (regionName) => {
+    if (isSuperAdmin) return true;
+    if (adminSession?.unlockedRegions?.includes(regionName)) return true;
+    return false;
+  };
+
+  const handleRegionSelect = (e) => {
+    const selected = e.target.value;
+    if (isRegionUnlocked(selected)) {
+      setActiveCluster(selected);
+    } else {
+      setChallengeModal({
+        targetRegion: selected,
+        passkeyInput: '',
+        error: ''
+      });
+    }
+  };
+
+  const handleUnlockSubmit = (e) => {
+    e.preventDefault();
+    if (!challengeModal) return;
+
+    const result = unlockRegion(challengeModal.targetRegion, challengeModal.passkeyInput);
+    if (result.success) {
+      setChallengeModal(null);
+    } else {
+      setChallengeModal(prev => ({
+        ...prev,
+        error: result.message || 'Invalid security key for this region.'
+      }));
+    }
+  };
 
   return (
     <div className="flex flex-col w-full pb-16 overflow-x-hidden">
@@ -24,30 +71,39 @@ export default function AdminCommandCenter() {
             <Icon name="admin_panel_settings" className="w-4 h-4 text-white" />
           </div>
           <div>
-            <div className="font-bold text-primary flex items-center gap-1.5">
+            <div className="font-bold text-primary flex items-center gap-2 flex-wrap">
               <span>Restricted Administrative Access Portal</span>
-              <span className="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-semibold">Secret URL Link</span>
+              {isSuperAdmin ? (
+                <span className="bg-primary text-on-primary text-[10px] px-2 py-0.5 rounded-full font-extrabold flex items-center gap-1">
+                  <span>★</span> Super Admin Clearance (All 4 Regions)
+                </span>
+              ) : (
+                <span className="bg-secondary-container/80 text-secondary text-[10px] px-2 py-0.5 rounded-full font-extrabold flex items-center gap-1">
+                  <span>📍</span> {adminSession?.badge || 'Regional Officer Clearance'}
+                </span>
+              )}
             </div>
             <p className="text-on-surface-variant text-[11px] mt-0.5">
-              Hidden from public site navigation. Direct bookmark link: <code className="bg-surface px-1.5 py-0.5 rounded text-primary font-mono font-bold">#/admin</code>
+              Authenticated Operator: <strong className="text-on-surface">{adminSession?.name || 'Authorized Personnel'}</strong> ({adminSession?.email || 'admin@annapurna.gov.in'})
             </p>
           </div>
         </div>
+
         <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
           <button
             onClick={() => {
-              const url = `${window.location.origin}${window.location.pathname}#admin`;
+              const url = window.location.origin + window.location.pathname + '#admin';
               navigator.clipboard?.writeText(url);
-              alert(`Direct Admin URL copied to clipboard:\n${url}`);
+              alert('Direct Admin URL copied to clipboard:\n' + url);
             }}
-            className="px-3 py-1.5 rounded-xl bg-surface hover:bg-surface-container border border-outline-variant/30 text-on-surface font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+            className="px-3 py-1.5 rounded-xl bg-surface hover:bg-surface-container border border-outline-variant/30 text-on-surface font-semibold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
           >
             <Icon name="link" className="w-3.5 h-3.5 text-primary" />
             <span>Copy Link</span>
           </button>
           <button
             onClick={logoutAdmin}
-            className="px-3 py-1.5 rounded-xl bg-primary text-on-primary font-semibold flex items-center gap-1.5 hover:bg-primary/90 transition-colors shadow-sm"
+            className="px-3 py-1.5 rounded-xl bg-primary text-on-primary font-semibold flex items-center gap-1.5 hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
           >
             <Icon name="logout" className="w-3.5 h-3.5 text-white" />
             <span>Log Out & Exit</span>
@@ -55,34 +111,47 @@ export default function AdminCommandCenter() {
         </div>
       </div>
 
-      {/* Top Welcome & Greeting Area */}
+      {/* Top Welcome & Greeting Area with Region Security Switcher */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-extrabold">
-              REGION:
+              REGION CLUSTER:
             </span>
-            <select
-              value={activeCluster}
-              onChange={(e) => setActiveCluster(e.target.value)}
-              className="bg-surface-container px-2 py-0.5 rounded text-xs font-bold text-primary border border-outline-variant/30 cursor-pointer"
-            >
-              <option value="Nashik Cluster (MH-15)">NASHIK CLUSTER (MH-15)</option>
-              <option value="Pune Hub (MH-12)">PUNE HUB (MH-12)</option>
-              <option value="Mumbai Agro Corridor (MH-01)">MUMBAI AGRO CORRIDOR (MH-01)</option>
-              <option value="Nagpur Central (MH-31)">NAGPUR CENTRAL (MH-31)</option>
-            </select>
+            <div className="relative inline-flex items-center">
+              <select
+                value={activeCluster}
+                onChange={handleRegionSelect}
+                className="bg-surface-container-high px-3 py-1 rounded-xl text-xs font-bold text-primary border border-outline-variant/30 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary pr-7"
+              >
+                {Object.keys(REGIONS_DATA).map(regName => {
+                  const unlocked = isRegionUnlocked(regName);
+                  return (
+                    <option key={regName} value={regName}>
+                      {unlocked ? '✓ ' : '🔒 '} {regName.toUpperCase()}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <span className="text-[11px] text-on-surface-variant font-medium">
+              {currentRegion.state} • Officer: <strong>{currentRegion.officerTitle}</strong>
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-primary">Admin Command Center 🛡️</h1>
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-primary">
+            {currentRegion.regionName} Command Hub
+          </h1>
           <p className="text-xs sm:text-sm text-on-surface-variant mt-1">
-            Live oversight of network-wide supply chain, logistics fleet, and market clearing rates.
+            {currentRegion.statusCard.desc}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <button
-            onClick={() => alert(`Cluster configuration for ${activeCluster} opened. Capacity limits: 500 MT per node.`)}
-            className="bg-primary hover:bg-primary-container text-on-primary font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all text-xs sm:text-sm"
+            onClick={() => alert('Cluster configuration for ' + activeCluster + ' opened. Active node capacity: 500 MT.')}
+            className="bg-primary hover:bg-primary/90 text-on-primary font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all text-xs sm:text-sm cursor-pointer"
           >
             <Icon name="settings_suggest" className="w-4 h-4 text-on-primary" />
             <span>Manage Cluster</span>
@@ -90,10 +159,11 @@ export default function AdminCommandCenter() {
         </div>
       </div>
 
-      {/* Metric Cards Grid */}
+      {/* Metric Cards Grid - Dynamic for Active Region */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Active Farmers */}
         <div className="bg-surface-container-low p-5 rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-primary-container"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-primary"></div>
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Active Farmers</span>
             <div className="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary shrink-0">
@@ -101,41 +171,44 @@ export default function AdminCommandCenter() {
             </div>
           </div>
           <div>
-            <span className="text-2xl sm:text-3xl font-extrabold text-on-surface">12,840</span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-on-surface">{currentRegion.metrics.activeFarmers}</span>
             <span className="text-xs text-secondary flex items-center gap-1 mt-1 font-bold">
-              <Icon name="trending_up" className="w-3.5 h-3.5 text-secondary" /> +5.4% this month
+              <Icon name="trending_up" className="w-3.5 h-3.5 text-secondary" /> {currentRegion.metrics.farmersTrend}
             </span>
           </div>
         </div>
 
-        <div className="bg-surface-container-low p-5 rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-tertiary-container"></div>
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Active Buyers</span>
-            <div className="w-10 h-10 rounded-xl bg-tertiary-fixed/40 flex items-center justify-center text-tertiary shrink-0">
-              <Icon name="storefront" className="w-5 h-5 text-tertiary" />
-            </div>
-          </div>
-          <div>
-            <span className="text-2xl sm:text-3xl font-extrabold text-on-surface">1,284</span>
-            <span className="text-xs text-on-surface-variant mt-1 block">Mandi & Retail Coops</span>
-          </div>
-        </div>
-
+        {/* Active Buyers */}
         <div className="bg-surface-container-low p-5 rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col justify-between relative overflow-hidden">
           <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-secondary"></div>
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Active Inventory</span>
-            <div className="w-10 h-10 rounded-xl bg-secondary-container flex items-center justify-center text-on-secondary-container shrink-0">
-              <Icon name="inventory_2" className="w-5 h-5 text-on-secondary-container" />
+            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Active Buyers</span>
+            <div className="w-10 h-10 rounded-xl bg-secondary-container/40 flex items-center justify-center text-secondary shrink-0">
+              <Icon name="storefront" className="w-5 h-5 text-secondary" />
             </div>
           </div>
           <div>
-            <span className="text-2xl sm:text-3xl font-extrabold text-on-surface">{totalInventoryTonnes + 180} MT</span>
-            <span className="text-xs text-secondary mt-1 block font-bold">Across 14 Warehouses</span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-on-surface">{currentRegion.metrics.activeBuyers}</span>
+            <span className="text-xs text-on-surface-variant mt-1 block">{currentRegion.metrics.buyersDesc}</span>
           </div>
         </div>
 
+        {/* Active Inventory */}
+        <div className="bg-surface-container-low p-5 rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-primary-container"></div>
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Active Inventory</span>
+            <div className="w-10 h-10 rounded-xl bg-primary-container/30 flex items-center justify-center text-primary shrink-0">
+              <Icon name="inventory_2" className="w-5 h-5 text-primary" />
+            </div>
+          </div>
+          <div>
+            <span className="text-2xl sm:text-3xl font-extrabold text-on-surface">{currentRegion.metrics.activeInventory}</span>
+            <span className="text-xs text-secondary mt-1 block font-bold">{currentRegion.metrics.inventorySub}</span>
+          </div>
+        </div>
+
+        {/* Warehouse Utilization */}
         <div className="bg-surface-container-low p-5 rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col justify-between relative overflow-hidden">
           <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-outline"></div>
           <div className="flex items-center justify-between mb-4">
@@ -145,31 +218,31 @@ export default function AdminCommandCenter() {
             </div>
           </div>
           <div>
-            <span className="text-2xl sm:text-3xl font-extrabold text-on-surface">72%</span>
-            <span className="text-xs text-on-surface-variant mt-1 block">Optimal Cold Capacity</span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-on-surface">{currentRegion.metrics.warehouseUtilization}</span>
+            <span className="text-xs text-on-surface-variant mt-1 block">{currentRegion.metrics.utilizationDesc}</span>
           </div>
         </div>
       </div>
 
       {/* Main Content Layout (2 Columns on Desktop) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Live Telemetry Map & Activity Feed */}
+        {/* Left 2 Cols: Live Regional Corridor Map & Activity Feed */}
         <div className="lg:col-span-2 space-y-6">
           {/* Live Telemetry Map Card */}
           <div className="bg-surface-container-low p-5 sm:p-6 rounded-2xl shadow-sm border border-outline-variant/20">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
               <div>
                 <h2 className="text-lg sm:text-xl text-on-surface font-bold">
-                  Live Regional Map & Movement Tracking
+                  {currentRegion.corridorMap.corridorName}
                 </h2>
                 <span className="text-xs text-on-surface-variant">
-                  Tracking 642 active transport units across Western Agro Corridors.
+                  {currentRegion.corridorMap.trackingUnitsSummary}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-secondary font-bold flex items-center gap-1.5 bg-secondary-container/40 px-2.5 py-1 rounded-full">
                   <Icon name="radar" className="w-3.5 h-3.5 text-secondary animate-pulse" />
-                  <span>Real-Time Telemetry</span>
+                  <span>{currentRegion.telemetry.lastSync}</span>
                 </span>
               </div>
             </div>
@@ -197,77 +270,65 @@ export default function AdminCommandCenter() {
                 />
               </svg>
 
-              {/* Hub Node 1: Nashik */}
-              <div className="absolute top-10 left-8 z-10 flex items-center gap-2">
-                <div className="relative">
-                  <div className="w-5 h-5 rounded-full bg-primary ring-4 ring-primary/20 flex items-center justify-center text-white text-[10px] font-bold">
-                    1
+              {/* Dynamic Regional Nodes */}
+              {currentRegion.corridorMap.nodes.map((node) => (
+                <div
+                  key={node.id}
+                  className="absolute z-10 flex items-center gap-2"
+                  style={{ left: node.x, top: node.y }}
+                >
+                  <div className="relative">
+                    <div className="w-5 h-5 rounded-full bg-primary ring-4 ring-primary/20 flex items-center justify-center text-white text-[10px] font-bold">
+                      {node.id}
+                    </div>
+                    {node.id === 1 && (
+                      <div className="absolute -inset-1 rounded-full bg-primary/30 animate-ping"></div>
+                    )}
                   </div>
-                  <div className="absolute -inset-1 rounded-full bg-primary/30 animate-ping"></div>
+                  <div className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm border border-outline-variant/30 text-left">
+                    <span className="text-xs font-extrabold text-primary block leading-tight">{node.name}</span>
+                    <span className="text-[10px] text-on-surface-variant font-medium">{node.status}</span>
+                  </div>
                 </div>
-                <div className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm border border-outline-variant/30 text-left">
-                  <span className="text-xs font-extrabold text-primary block">Nashik Central Hub</span>
-                  <span className="text-[10px] text-on-surface-variant">32 Trucks Loading</span>
-                </div>
-              </div>
+              ))}
 
-              {/* Hub Node 2: Igatpuri Checkpoint */}
-              <div className="absolute top-32 left-[44%] z-10 flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-secondary ring-4 ring-secondary/20 flex items-center justify-center text-white text-[8px]">
-                  2
-                </div>
-                <div className="bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-lg shadow-sm border border-outline-variant/30 text-left">
-                  <span className="text-xs font-bold text-on-surface block">Kasara Checkpoint</span>
-                  <span className="text-[10px] text-secondary font-bold">Avg 4.2°C Passed</span>
-                </div>
-              </div>
-
-              {/* Hub Node 3: Mumbai Terminal */}
-              <div className="absolute bottom-10 right-10 z-10 flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-secondary-container text-on-secondary-container ring-4 ring-secondary/20 flex items-center justify-center text-primary font-bold text-[10px]">
-                  3
-                </div>
-                <div className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm border border-outline-variant/30 text-left">
-                  <span className="text-xs font-extrabold text-primary block">Mumbai APMC Vashi</span>
-                  <span className="text-[10px] text-on-surface-variant">Unloading Gate Active</span>
-                </div>
-              </div>
-
-              {/* Moving Truck on Route */}
+              {/* Moving Vehicle on Route */}
               <div
                 className="absolute z-20 transition-all duration-1000 ease-linear flex flex-col items-center pointer-events-none"
                 style={{
-                  left: `${liveVehiclePos}%`,
-                  top: `${16 + (liveVehiclePos * 0.65)}%`
+                  left: liveVehiclePos + '%',
+                  top: (16 + (liveVehiclePos * 0.65)) + '%'
                 }}
               >
                 <div className="bg-primary text-white p-1.5 rounded-xl shadow-lg ring-2 ring-white flex items-center gap-1.5">
                   <Icon name="local_shipping" className="w-3.5 h-3.5 text-white" />
-                  <span className="text-[9px] font-mono font-bold pr-1">MH-15-TC-7721</span>
+                  <span className="text-[9px] font-mono font-bold pr-1">{currentRegion.corridorMap.vehicleReg}</span>
                 </div>
-                <div className="w-2 h-2 bg-primary rounded-full mt-1"></div>
+                <div className="bg-white/95 px-1.5 py-0.5 rounded text-[8px] font-bold text-primary shadow mt-0.5 whitespace-nowrap">
+                  {currentRegion.corridorMap.vehicleCargo}
+                </div>
               </div>
 
               {/* Bottom Map Stats Overlay */}
               <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 bg-surface/90 backdrop-blur-md p-3 rounded-xl border border-outline-variant/20">
                 <div className="flex items-center gap-4 text-xs">
                   <div>
-                    <span className="text-on-surface-variant block text-[10px]">Corridor:</span>
-                    <span className="font-bold text-primary">Nashik - Mumbai Express (NH-160)</span>
-                  </div>
-                  <div>
-                    <span className="text-on-surface-variant block text-[10px]">Distance:</span>
-                    <span className="font-bold text-on-surface">166 km</span>
+                    <span className="text-on-surface-variant block text-[10px]">Corridor Distance:</span>
+                    <span className="font-bold text-on-surface">{currentRegion.corridorMap.distance}</span>
                   </div>
                   <div>
                     <span className="text-on-surface-variant block text-[10px]">Avg Transit:</span>
-                    <span className="font-bold text-secondary">3 hrs 45 mins</span>
+                    <span className="font-bold text-secondary">{currentRegion.corridorMap.avgTransit}</span>
+                  </div>
+                  <div>
+                    <span className="text-on-surface-variant block text-[10px]">Live Fleet on Corridor:</span>
+                    <span className="font-bold text-primary">{currentRegion.corridorMap.activeUnits} Units</span>
                   </div>
                 </div>
                 <div>
                   <button
-                    onClick={() => alert("Satellite geofence view refreshed.")}
-                    className="px-2.5 py-1 bg-surface-container-high hover:bg-surface-container rounded-lg text-xs font-bold text-primary"
+                    onClick={() => alert('Satellite geofence for ' + currentRegion.regionName + ' refreshed.')}
+                    className="px-2.5 py-1 bg-surface-container-high hover:bg-surface-container rounded-lg text-xs font-bold text-primary cursor-pointer"
                   >
                     Refresh Geofence
                   </button>
@@ -276,37 +337,34 @@ export default function AdminCommandCenter() {
             </div>
           </div>
 
-          {/* Real-Time Activity Feed */}
+          {/* Regional Real-Time Activity Feed & Audit Stream */}
           <div className="bg-surface-container-low p-5 sm:p-6 rounded-2xl shadow-sm border border-outline-variant/20">
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div>
                 <h2 className="text-lg sm:text-xl text-on-surface font-bold">
-                  Comprehensive Activity Feed & Audit Stream
+                  {currentRegion.regionName} Event Stream
                 </h2>
                 <span className="text-xs text-on-surface-variant">
-                  Live state events published across all user roles.
+                  Immutable audit records verified for {currentRegion.code}.
                 </span>
               </div>
               <button
-                onClick={() => alert("Full audit log exported as CSV.")}
-                className="text-xs font-bold text-primary hover:underline"
+                onClick={() => alert('Full audit log for ' + currentRegion.regionName + ' exported as CSV.')}
+                className="text-xs font-bold text-primary hover:underline cursor-pointer"
               >
-                Export Audit CSV
+                Export Regional Audit CSV
               </button>
             </div>
 
             <div className="space-y-2.5">
-              {auditLogs.map((log) => (
+              {currentRegion.auditStream.map((log) => (
                 <div
                   key={log.id}
                   className="bg-surface-container-lowest p-3.5 rounded-xl flex items-center justify-between gap-3 shadow-sm border border-outline-variant/15 hover:border-outline-variant/40 transition-all"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-primary-container/20 flex items-center justify-center text-primary shrink-0">
-                      <Icon
-                        name={log.type === 'transit' ? 'local_shipping' : log.type === 'payment' ? 'payments' : 'inventory_2'}
-                        className="w-4 h-4 text-primary"
-                      />
+                      <Icon name="verified_user" className="w-4 h-4 text-primary" />
                     </div>
                     <div>
                       <h4 className="text-xs sm:text-sm font-bold text-on-surface">{log.title}</h4>
@@ -314,7 +372,7 @@ export default function AdminCommandCenter() {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold inline-block mb-0.5 ${log.badgeClass}`}>
+                    <span className={'text-[10px] px-2 py-0.5 rounded-full font-bold inline-block mb-0.5 ' + log.badgeClass}>
                       {log.badge}
                     </span>
                     <span className="text-[10px] text-on-surface-variant block">{log.time}</span>
@@ -331,108 +389,161 @@ export default function AdminCommandCenter() {
           <div className="bg-primary text-on-primary p-5 sm:p-6 rounded-2xl shadow-md relative overflow-hidden">
             <div className="flex items-center justify-between mb-4">
               <span className="text-[10px] uppercase tracking-wider text-primary-fixed font-bold">
-                COMMAND CENTER STATUS
+                {currentRegion.code} STATUS TELEMETRY
               </span>
               <Icon name="admin_panel_settings" className="w-5 h-5 text-primary-fixed" />
             </div>
-            <h3 className="text-lg sm:text-xl font-bold mb-1">Cluster Network Stable</h3>
+            <h3 className="text-lg sm:text-xl font-bold mb-1">{currentRegion.statusCard.title}</h3>
             <p className="text-xs text-on-primary-container mb-4">
-              All 14 regional collection centers and transport hubs operating normally.
+              {currentRegion.statusCard.desc}
             </p>
             <div className="bg-surface/10 backdrop-blur-md p-3.5 rounded-xl mb-4 space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-on-primary-container">Active Fleet Units:</span>
-                <span className="text-on-primary font-bold">642 Vehicles</span>
+                <span className="text-on-primary font-bold">{currentRegion.statusCard.activeFleet}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-on-primary-container">System Latency:</span>
-                <span className="text-on-primary font-bold">24ms (Optimal)</span>
+                <span className="text-on-primary font-bold">{currentRegion.statusCard.systemLatency}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-on-primary-container">Escrow Health:</span>
-                <span className="text-secondary-fixed font-bold">100% Fully Collateralized</span>
+                <span className="text-secondary-fixed font-bold">{currentRegion.statusCard.escrowHealth}</span>
               </div>
             </div>
             <button
-              onClick={() => alert("Network Audit Report generated. Everything running at peak efficiency.")}
-              className="w-full bg-surface text-on-surface hover:bg-surface-container-low font-bold py-2.5 px-4 rounded-xl transition-all text-xs"
+              onClick={() => alert('Network Audit Report generated for ' + currentRegion.regionName + '. Running at nominal efficiency.')}
+              className="w-full bg-surface text-on-surface hover:bg-surface-container-low font-bold py-2.5 px-4 rounded-xl transition-all text-xs cursor-pointer"
             >
-              Download Network Audit
+              Download Regional Audit
             </button>
           </div>
 
-          {/* Regional Transport Corridor Reliability */}
-          <div className="bg-surface-container-low p-5 sm:p-6 rounded-2xl shadow-sm border border-outline-variant/20">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base sm:text-lg text-on-surface font-bold">Corridor Reliability</h3>
-              <Icon name="local_shipping" className="w-4 h-4 text-on-surface-variant" />
-            </div>
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between p-3 bg-surface-container rounded-xl">
-                <div>
-                  <span className="text-xs sm:text-sm text-on-surface font-bold block">Nashik - Mumbai Express</span>
-                  <span className="text-[11px] text-secondary">142 Trucks Active</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-sm sm:text-base text-on-surface font-extrabold">98%</span>
-                  <span className="text-[10px] text-secondary block font-bold">On-Time</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-surface-container rounded-xl">
-                <div>
-                  <span className="text-xs sm:text-sm text-on-surface font-bold block">Pune - Nagpur Corridor</span>
-                  <span className="text-[11px] text-on-surface-variant">98 Trucks Active</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-sm sm:text-base text-on-surface font-extrabold">94%</span>
-                  <span className="text-[10px] text-on-surface-variant block">Normal</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-surface-container rounded-xl">
-                <div>
-                  <span className="text-xs sm:text-sm text-on-surface font-bold block">Aurangabad Local Fleet</span>
-                  <span className="text-[11px] text-on-surface-variant">84 Trucks Active</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-sm sm:text-base text-on-surface font-extrabold">99%</span>
-                  <span className="text-[10px] text-secondary block font-bold">On-Time</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Cold Storage IoT Temperature Gauges */}
+          {/* Regional Cold Storage IoT Telemetry */}
           <div className="bg-surface-container-low p-5 sm:p-6 rounded-2xl shadow-sm border border-outline-variant/20">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base sm:text-lg text-on-surface font-bold">Cold-Chain IoT Telemetry</h3>
+              <h3 className="text-base sm:text-lg text-on-surface font-bold">Cold-Chain Telemetry</h3>
               <Icon name="thermostat" className="w-4 h-4 text-secondary" />
             </div>
             <div className="p-3.5 bg-surface-container rounded-xl space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-xs font-semibold text-on-surface">Nashik Hub Cold Room #1:</span>
+                <span className="text-xs font-semibold text-on-surface">Ambient Pulp Temperature:</span>
                 <span className="text-xs font-bold text-secondary bg-secondary-container/40 px-2 py-0.5 rounded">
-                  4.2°C (Optimal)
+                  {currentRegion.telemetry.ambientTemp}
                 </span>
               </div>
-              <div className="w-full bg-surface-container-high rounded-full h-2">
-                <div className="bg-secondary h-2 rounded-full" style={{ width: '42%' }}></div>
-              </div>
+              <span className="text-[10px] text-on-surface-variant block">
+                {currentRegion.telemetry.ambientStatus}
+              </span>
 
-              <div className="flex justify-between items-center pt-1">
-                <span className="text-xs font-semibold text-on-surface">Reefer Truck Reefer-04:</span>
-                <span className="text-xs font-bold text-secondary bg-secondary-container/40 px-2 py-0.5 rounded">
-                  3.8°C (En route)
+              <div className="flex justify-between items-center pt-2 border-t border-outline-variant/20">
+                <span className="text-xs font-semibold text-on-surface">Chamber Humidity:</span>
+                <span className="text-xs font-bold text-primary bg-primary-container/30 px-2 py-0.5 rounded">
+                  {currentRegion.telemetry.humidity}
                 </span>
               </div>
-              <div className="w-full bg-surface-container-high rounded-full h-2">
-                <div className="bg-secondary h-2 rounded-full" style={{ width: '38%' }}></div>
+              <span className="text-[10px] text-on-surface-variant block">
+                {currentRegion.telemetry.humidityStatus}
+              </span>
+
+              <div className="flex justify-between items-center pt-2 border-t border-outline-variant/20">
+                <span className="text-xs font-semibold text-on-surface">Corridor Compliance:</span>
+                <span className="text-xs font-bold text-secondary bg-secondary-container/40 px-2 py-0.5 rounded">
+                  {currentRegion.telemetry.complianceRate}
+                </span>
               </div>
+              <span className="text-[10px] text-on-surface-variant block">
+                {currentRegion.telemetry.complianceStatus}
+              </span>
             </div>
+          </div>
+
+          {/* Regional Clearance Security Info */}
+          <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/20 text-xs">
+            <div className="flex items-center gap-2 mb-2">
+              <Icon name="verified_user" className="w-4 h-4 text-primary" />
+              <span className="font-bold text-on-surface">Data Access Control Policy</span>
+            </div>
+            <p className="text-[11px] text-on-surface-variant leading-relaxed">
+              Every agro corridor maintains segregated cryptographic partitions. Regional officers can only access telemetry within their jurisdiction. Super Admins hold multi-tenant national clearance.
+            </p>
           </div>
         </div>
       </div>
+
+      {/* Regional Access Challenge Modal */}
+      {challengeModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-surface-container-lowest max-w-md w-full rounded-3xl p-6 shadow-2xl border border-outline-variant/30">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-error-container/30 text-error flex items-center justify-center shrink-0">
+                <Icon name="lock" className="w-5 h-5 text-error" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-on-surface">Restricted Regional Clearance</h3>
+                <span className="text-xs text-on-surface-variant font-mono">
+                  Target: {challengeModal.targetRegion}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-on-surface-variant mb-4">
+              You are currently logged in as <strong>{adminSession?.name}</strong>. Data for <strong>{challengeModal.targetRegion}</strong> is encrypted. Please enter this territory's Regional Officer security key or the National Super Admin key to unlock:
+            </p>
+
+            {challengeModal.error && (
+              <div className="mb-3 p-2.5 rounded-xl bg-error-container/40 text-error text-xs flex items-center gap-2">
+                <Icon name="gpp_bad" className="w-4 h-4 text-error shrink-0" />
+                <span>{challengeModal.error}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleUnlockSubmit} className="space-y-4">
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-xs font-bold text-on-surface">Regional Passkey</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const demoKey = REGIONS_DATA[challengeModal.targetRegion]?.passkey || 'admin2026';
+                      setChallengeModal(prev => ({ ...prev, passkeyInput: demoKey, error: '' }));
+                    }}
+                    className="text-[11px] text-secondary hover:text-primary font-bold hover:underline cursor-pointer"
+                  >
+                    Demo key: <code className="font-mono bg-surface-container px-1 py-0.5 rounded">{REGIONS_DATA[challengeModal.targetRegion]?.passkey}</code>
+                  </button>
+                </div>
+                <input
+                  type="password"
+                  value={challengeModal.passkeyInput}
+                  onChange={(e) => setChallengeModal(prev => ({ ...prev, passkeyInput: e.target.value, error: '' }))}
+                  required
+                  autoFocus
+                  placeholder="Enter passkey to unlock..."
+                  className="w-full bg-surface-container-low px-3.5 py-2 rounded-xl text-xs text-on-surface border border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setChallengeModal(null)}
+                  className="flex-1 px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-bold text-on-surface transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-xs font-bold text-on-primary shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Icon name="verified_user" className="w-3.5 h-3.5 text-white" />
+                  <span>Unlock Region</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
