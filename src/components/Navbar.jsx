@@ -64,15 +64,6 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* User Profile Avatar */}
-          <div
-            onClick={() => navigateTo('login')}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary text-on-primary flex items-center justify-center cursor-pointer shadow-sm hover:opacity-90 transition-opacity"
-            title="Account & Auth"
-          >
-            <Icon name="person" className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-          </div>
-
           {/* Mobile Menu Hamburger Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -114,20 +105,6 @@ export default function Navbar() {
           >
             <Icon name="local_shipping" className="w-4 h-4" />
             <span>Fleet Logistics</span>
-          </button>
-          <button
-            onClick={() => { navigateTo('login'); setMobileMenuOpen(false); }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-xs font-semibold text-primary hover:bg-surface-container"
-          >
-            <Icon name="login" className="w-4 h-4 text-primary" />
-            <span>Login / Sign Up</span>
-          </button>
-          <button
-            onClick={() => { setInspectingBatch(produceList[0]); setMobileMenuOpen(false); }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-xs font-semibold text-primary hover:bg-surface-container"
-          >
-            <Icon name="qr_code_2" className="w-4 h-4 text-primary" />
-            <span>Traceability Passport</span>
           </button>
         </div>
       )}

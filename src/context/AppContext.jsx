@@ -325,36 +325,65 @@ const INITIAL_AUDIT_LOGS = [
 ];
 
 export function AppProvider({ children }) {
-  // Active view & role state
+  const VALID_VIEWS = ['landing', 'login', 'farmer', 'buyer', 'fleet', 'admin'];
+  const VALID_ROLES = ['farmer', 'buyer', 'transport', 'admin'];
+
+  // Active view & role state with corruption guards
   const [currentView, setCurrentView] = useState(() => {
-    return localStorage.getItem('annapurna_view') || 'landing';
+    try {
+      const saved = localStorage.getItem('annapurna_view');
+      return (saved && VALID_VIEWS.includes(saved)) ? saved : 'landing';
+    } catch {
+      return 'landing';
+    }
   });
 
   const [activeRole, setActiveRole] = useState(() => {
-    return localStorage.getItem('annapurna_role') || 'farmer';
+    try {
+      const saved = localStorage.getItem('annapurna_role');
+      return (saved && VALID_ROLES.includes(saved)) ? saved : 'farmer';
+    } catch {
+      return 'farmer';
+    }
   });
 
   const [activeCluster, setActiveCluster] = useState("Nashik Cluster (MH-15)");
 
-  // Dynamic entities
+  // Dynamic entities with try/catch JSON parse protection
   const [produceList, setProduceList] = useState(() => {
-    const saved = localStorage.getItem('annapurna_produce');
-    return saved ? JSON.parse(saved) : INITIAL_PRODUCE;
+    try {
+      const saved = localStorage.getItem('annapurna_produce');
+      return saved ? JSON.parse(saved) : INITIAL_PRODUCE;
+    } catch {
+      return INITIAL_PRODUCE;
+    }
   });
 
   const [fleetList, setFleetList] = useState(() => {
-    const saved = localStorage.getItem('annapurna_fleet');
-    return saved ? JSON.parse(saved) : INITIAL_FLEET;
+    try {
+      const saved = localStorage.getItem('annapurna_fleet');
+      return saved ? JSON.parse(saved) : INITIAL_FLEET;
+    } catch {
+      return INITIAL_FLEET;
+    }
   });
 
   const [orderList, setOrderList] = useState(() => {
-    const saved = localStorage.getItem('annapurna_orders');
-    return saved ? JSON.parse(saved) : INITIAL_ORDERS;
+    try {
+      const saved = localStorage.getItem('annapurna_orders');
+      return saved ? JSON.parse(saved) : INITIAL_ORDERS;
+    } catch {
+      return INITIAL_ORDERS;
+    }
   });
 
   const [auditLogs, setAuditLogs] = useState(() => {
-    const saved = localStorage.getItem('annapurna_audit');
-    return saved ? JSON.parse(saved) : INITIAL_AUDIT_LOGS;
+    try {
+      const saved = localStorage.getItem('annapurna_audit');
+      return saved ? JSON.parse(saved) : INITIAL_AUDIT_LOGS;
+    } catch {
+      return INITIAL_AUDIT_LOGS;
+    }
   });
 
   // Active Traceability Modal State
@@ -640,7 +669,6 @@ export function AppProvider({ children }) {
         inspectingBatch,
         setInspectingBatch,
         isAdminAuthenticated,
-        setIsAdminAuthenticated,
         adminSession,
         setAdminSession,
         loginAdmin,

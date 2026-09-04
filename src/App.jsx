@@ -42,6 +42,10 @@ export default function App() {
           {currentView === 'admin' && (
             isAdminAuthenticated ? <AdminCommandCenter /> : <AdminLoginGate />
           )}
+          {/* Fallback to landing page if view state is unrecognized */}
+          {!['landing', 'login', 'farmer', 'buyer', 'fleet', 'admin'].includes(currentView) && (
+            <LandingPage />
+          )}
         </main>
       </div>
 
