@@ -384,10 +384,45 @@ export function AppProvider({ children }) {
     localStorage.setItem('annapurna_audit', JSON.stringify(auditLogs));
   }, [auditLogs]);
 
+  // Handle URL hash or param routing for direct Admin Portal access via specific link
+  useEffect(() => {
+    const handleUrlRoute = () => {
+      const hash = (window.location.hash || '').toLowerCase();
+      const search = (window.location.search || '').toLowerCase();
+      const path = (window.location.pathname || '').toLowerCase();
+
+      if (
+        hash === '#admin' ||
+        hash === '#/admin' ||
+        hash.startsWith('#admin') ||
+        search.includes('admin=true') ||
+        search.includes('portal=admin') ||
+        search.includes('view=admin') ||
+        path.endsWith('/admin')
+      ) {
+        setCurrentView('admin');
+        setActiveRole('admin');
+      }
+    };
+
+    handleUrlRoute();
+    window.addEventListener('hashchange', handleUrlRoute);
+    window.addEventListener('popstate', handleUrlRoute);
+    return () => {
+      window.removeEventListener('hashchange', handleUrlRoute);
+      window.removeEventListener('popstate', handleUrlRoute);
+    };
+  }, []);
+
   // Navigate helper
   const navigateTo = (view, role = null) => {
     if (role) setActiveRole(role);
     setCurrentView(view);
+    if (view === 'admin') {
+      window.location.hash = 'admin';
+    } else if (window.location.hash.toLowerCase().includes('admin')) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

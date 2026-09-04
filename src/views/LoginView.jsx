@@ -10,7 +10,11 @@ export default function LoginView() {
   const [password, setPassword] = useState('agrichain2026');
   const [otp, setOtp] = useState(['4', '8', '9', '2']);
 
-  const roles = [
+  const isAdminRoute = 
+    window.location.hash.toLowerCase().includes('admin') || 
+    window.location.search.toLowerCase().includes('admin');
+
+  const baseRoles = [
     {
       id: 'farmer',
       title: 'Farmer / FPO',
@@ -34,16 +38,19 @@ export default function LoginView() {
       icon: 'local_shipping',
       portalTitle: 'Fleet & Logistics Authentication',
       targetView: 'fleet'
-    },
-    {
-      id: 'admin',
-      title: 'Admin',
-      desc: 'Manage regions, inventory, users, and logistics networks.',
-      icon: 'admin_panel_settings',
-      portalTitle: 'Command Center Administrative Access',
-      targetView: 'admin'
     }
   ];
+
+  const adminRole = {
+    id: 'admin',
+    title: 'Admin',
+    desc: 'Manage regions, inventory, users, and logistics networks.',
+    icon: 'admin_panel_settings',
+    portalTitle: 'Command Center Administrative Access',
+    targetView: 'admin'
+  };
+
+  const roles = isAdminRoute ? [...baseRoles, adminRole] : baseRoles;
 
   const currentRole = roles.find(r => r.id === selectedRole) || roles[0];
 
@@ -71,7 +78,7 @@ export default function LoginView() {
             </div>
 
             {/* Role Selector Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className={`grid grid-cols-1 ${roles.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-4`}>
               {roles.map((r) => {
                 const isSelected = selectedRole === r.id;
                 return (

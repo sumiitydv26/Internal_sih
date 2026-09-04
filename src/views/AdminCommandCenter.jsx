@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import Icon from '../components/Icon';
 
 export default function AdminCommandCenter() {
-  const { auditLogs, produceList, activeCluster, setActiveCluster } = useApp();
+  const { auditLogs, produceList, activeCluster, setActiveCluster, navigateTo } = useApp();
   const [liveVehiclePos, setLiveVehiclePos] = useState(42);
 
   useEffect(() => {
@@ -17,6 +17,44 @@ export default function AdminCommandCenter() {
 
   return (
     <div className="flex flex-col w-full pb-16 overflow-x-hidden">
+      {/* Secret Admin Portal Access Banner */}
+      <div className="mb-6 p-3 sm:p-4 rounded-2xl bg-primary/10 border border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm">
+            <Icon name="admin_panel_settings" className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <div className="font-bold text-primary flex items-center gap-1.5">
+              <span>Restricted Administrative Access Portal</span>
+              <span className="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-semibold">Secret URL Link</span>
+            </div>
+            <p className="text-on-surface-variant text-[11px] mt-0.5">
+              Hidden from public site navigation. Direct bookmark link: <code className="bg-surface px-1.5 py-0.5 rounded text-primary font-mono font-bold">#/admin</code>
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+          <button
+            onClick={() => {
+              const url = `${window.location.origin}${window.location.pathname}#admin`;
+              navigator.clipboard?.writeText(url);
+              alert(`Direct Admin URL copied to clipboard:\n${url}`);
+            }}
+            className="px-3 py-1.5 rounded-xl bg-surface hover:bg-surface-container border border-outline-variant/30 text-on-surface font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+          >
+            <Icon name="link" className="w-3.5 h-3.5 text-primary" />
+            <span>Copy Link</span>
+          </button>
+          <button
+            onClick={() => navigateTo('landing')}
+            className="px-3 py-1.5 rounded-xl bg-primary text-on-primary font-semibold flex items-center gap-1.5 hover:bg-primary/90 transition-colors shadow-sm"
+          >
+            <Icon name="logout" className="w-3.5 h-3.5 text-white" />
+            <span>Exit Admin</span>
+          </button>
+        </div>
+      </div>
+
       {/* Top Welcome & Greeting Area */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>

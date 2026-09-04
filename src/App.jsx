@@ -73,13 +73,13 @@ export default function App() {
             <span className="text-[10px] mt-0.5">Fleet</span>
           </button>
           <button
-            onClick={() => navigateTo('admin', 'admin')}
+            onClick={() => navigateTo('landing')}
             className={`flex flex-col items-center py-1 px-2.5 rounded-lg transition-colors ${
-              currentView === 'admin' ? 'text-primary font-bold bg-primary-container/20' : 'text-on-surface-variant'
+              currentView === 'landing' ? 'text-primary font-bold bg-primary-container/20' : 'text-on-surface-variant'
             }`}
           >
-            <Icon name="admin_panel_settings" className="w-5 h-5" />
-            <span className="text-[10px] mt-0.5">Admin</span>
+            <Icon name="home" className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Home</span>
           </button>
         </div>
       )}

@@ -3,18 +3,10 @@ import { useApp } from '../context/AppContext';
 import Icon from './Icon';
 
 export default function Navbar() {
-  const { currentView, navigateTo, activeRole, setActiveRole, produceList, setInspectingBatch, auditLogs } = useApp();
-  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const { currentView, navigateTo, produceList, setInspectingBatch, auditLogs } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const roles = [
-    { id: 'farmer', label: 'Farmer / FPO', icon: 'agriculture', view: 'farmer' },
-    { id: 'buyer', label: 'Buyer / Mandi', icon: 'storefront', view: 'buyer' },
-    { id: 'transport', label: 'Transport Fleet', icon: 'local_shipping', view: 'fleet' },
-    { id: 'admin', label: 'System Admin', icon: 'admin_panel_settings', view: 'admin' },
-  ];
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -30,8 +22,6 @@ export default function Navbar() {
       navigateTo('buyer');
     }
   };
-
-  const currentRoleObj = roles.find(r => r.id === activeRole) || roles[0];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/20">
@@ -79,56 +69,18 @@ export default function Navbar() {
             <span className="hidden md:inline">Trace Lot</span>
           </button>
 
-          {/* Active Role Selector Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-primary-container/20 hover:bg-primary-container/30 border border-primary/20 text-primary transition-all text-xs font-bold shadow-sm"
-            >
-              <Icon name={currentRoleObj.icon} className="w-4 h-4" />
-              <span className="hidden sm:inline">{currentRoleObj.label}</span>
-              <Icon name="expand_more" className="w-3.5 h-3.5" />
-            </button>
-
-            {showRoleDropdown && (
-              <div className="absolute right-0 mt-2 w-56 bg-surface-container-lowest rounded-2xl shadow-2xl border border-outline-variant/30 py-2 z-50 animate-fadeIn">
-                <div className="px-3 py-1.5 text-[10px] text-on-surface-variant uppercase tracking-wider font-bold border-b border-surface-variant mb-1">
-                  Switch Active Persona
-                </div>
-                {roles.map(r => (
-                  <button
-                    key={r.id}
-                    onClick={() => {
-                      setActiveRole(r.id);
-                      navigateTo(r.view, r.id);
-                      setShowRoleDropdown(false);
-                    }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors ${
-                      activeRole === r.id ? 'bg-primary-container/20 text-primary font-bold' : 'text-on-surface hover:bg-surface-container-high'
-                    }`}
-                  >
-                    <Icon name={r.icon} className="w-4 h-4" />
-                    <span className="flex-1">{r.label}</span>
-                    {activeRole === r.id && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                    )}
-                  </button>
-                ))}
-                <div className="border-t border-surface-variant mt-1 pt-1">
-                  <button
-                    onClick={() => {
-                      navigateTo('login');
-                      setShowRoleDropdown(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs text-secondary hover:bg-surface-container-high font-bold"
-                  >
-                    <Icon name="login" className="w-4 h-4" />
-                    <span>Unified Login Portal</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Login / Sign Up Action Button */}
+          <button
+            onClick={() => navigateTo('login')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all active:scale-95 ${
+              currentView === 'login'
+                ? 'bg-primary-container text-on-primary-container ring-2 ring-primary'
+                : 'bg-primary hover:bg-primary/90 text-on-primary hover:shadow-md'
+            }`}
+          >
+            <Icon name="login" className="w-4 h-4 text-white" />
+            <span>Login / Sign Up</span>
+          </button>
 
           {/* Notifications Dropdown */}
           <div className="relative">
@@ -214,11 +166,11 @@ export default function Navbar() {
             <span>Fleet Logistics</span>
           </button>
           <button
-            onClick={() => { navigateTo('admin', 'admin'); setMobileMenuOpen(false); }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-xs font-semibold text-on-surface hover:bg-surface-container"
+            onClick={() => { navigateTo('login'); setMobileMenuOpen(false); }}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-xs font-semibold text-primary hover:bg-surface-container"
           >
-            <Icon name="admin_panel_settings" className="w-4 h-4" />
-            <span>Command Center</span>
+            <Icon name="login" className="w-4 h-4 text-primary" />
+            <span>Login / Sign Up</span>
           </button>
           <button
             onClick={() => { setInspectingBatch(produceList[0]); setMobileMenuOpen(false); }}

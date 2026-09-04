@@ -203,11 +203,11 @@ export default function LandingPage() {
               <h2 className="text-2xl sm:text-3xl font-extrabold text-on-surface">Experience All Perspectives</h2>
             </div>
             <p className="text-sm text-on-surface-variant max-w-md">
-              Click into any role to see how data flows dynamically between farmers, buyers, fleet, and command center.
+              Click into any role to see how data flows dynamically between farmers, buyers, and logistics fleet.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Role 1: Farmer */}
             <div
               onClick={() => navigateTo('farmer', 'farmer')}
@@ -264,26 +264,6 @@ export default function LandingPage() {
               </div>
               <div className="flex items-center text-xs sm:text-sm font-bold text-primary gap-1.5 group-hover:gap-2.5 transition-all">
                 <span>Manage Fleet</span>
-                <Icon name="arrow_forward" className="w-4 h-4 text-primary" />
-              </div>
-            </div>
-
-            {/* Role 4: Command Center */}
-            <div
-              onClick={() => navigateTo('admin', 'admin')}
-              className="bg-surface-container-lowest p-5 sm:p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all cursor-pointer border border-outline-variant/20 flex flex-col justify-between group hover:-translate-y-1"
-            >
-              <div>
-                <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
-                  <Icon name="admin_panel_settings" className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-bold text-primary mb-2">Command Center</h3>
-                <p className="text-xs sm:text-sm text-on-surface-variant mb-4">
-                  Live oversight of corridor telematics, warehouse utilization, and network-wide clearing settlement.
-                </p>
-              </div>
-              <div className="flex items-center text-xs sm:text-sm font-bold text-primary gap-1.5 group-hover:gap-2.5 transition-all">
-                <span>View Command Hub</span>
                 <Icon name="arrow_forward" className="w-4 h-4 text-primary" />
               </div>
             </div>
@@ -373,7 +353,7 @@ export default function LandingPage() {
             <button onClick={() => navigateTo('farmer', 'farmer')} className="hover:text-white transition-colors">Farmer Hub</button>
             <button onClick={() => navigateTo('buyer', 'buyer')} className="hover:text-white transition-colors">Buyer Marketplace</button>
             <button onClick={() => navigateTo('fleet', 'transport')} className="hover:text-white transition-colors">Fleet Hub</button>
-            <button onClick={() => navigateTo('admin', 'admin')} className="hover:text-white transition-colors">Command Center</button>
+            <button onClick={() => navigateTo('login')} className="hover:text-white transition-colors">Sign In / Register</button>
           </div>
           <div className="text-[11px] text-on-primary-container">
             © 2026 Annapurna. Built for National Agro Logistics Integration.
