@@ -54,67 +54,6 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Global Navigation Links (Desktop) */}
-        <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
-          <button
-            onClick={() => navigateTo('landing')}
-            className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-1.5 ${
-              currentView === 'landing'
-                ? 'bg-primary-container/20 text-primary font-bold'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
-            }`}
-          >
-            <span>Home</span>
-          </button>
-
-          <button
-            onClick={() => navigateTo('buyer', 'buyer')}
-            className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-1.5 ${
-              currentView === 'buyer'
-                ? 'bg-primary-container/20 text-primary font-bold'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
-            }`}
-          >
-            <Icon name="storefront" className="w-4 h-4" />
-            <span>Marketplace</span>
-          </button>
-
-          <button
-            onClick={() => navigateTo('farmer', 'farmer')}
-            className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-1.5 ${
-              currentView === 'farmer'
-                ? 'bg-primary-container/20 text-primary font-bold'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
-            }`}
-          >
-            <Icon name="agriculture" className="w-4 h-4" />
-            <span>Farmer Hub</span>
-          </button>
-
-          <button
-            onClick={() => navigateTo('fleet', 'transport')}
-            className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-1.5 ${
-              currentView === 'fleet'
-                ? 'bg-primary-container/20 text-primary font-bold'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
-            }`}
-          >
-            <Icon name="local_shipping" className="w-4 h-4" />
-            <span>Fleet Logistics</span>
-          </button>
-
-          <button
-            onClick={() => navigateTo('admin', 'admin')}
-            className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-1.5 ${
-              currentView === 'admin'
-                ? 'bg-primary-container/20 text-primary font-bold'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
-            }`}
-          >
-            <Icon name="admin_panel_settings" className="w-4 h-4" />
-            <span>Command Center</span>
-          </button>
-        </nav>
 
         {/* Search Bar (Tablet / Desktop) */}
         <form onSubmit={handleSearch} className="hidden md:flex items-center relative flex-1 max-w-[200px] lg:max-w-[240px]">
