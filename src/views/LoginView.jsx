@@ -62,21 +62,20 @@ export default function LoginView() {
 
   return (
     <div className="relative w-full min-h-screen flex items-center justify-center p-4 sm:p-8 pt-20 sm:pt-24 pb-16 overflow-hidden">
-      {/* Background Video of Farmer with Tractor on Field */}
+      {/* Background Video of Farmer Sowing Seeds in Field */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none">
         <video
           autoPlay
           loop
           muted
           playsInline
-          poster="https://lh3.googleusercontent.com/aida-public/AB6AXuAKHgwx0DuNJsJkY2RILkTWYqwm0jl2o34xFmRyZkTTNJpcDw3jXMvcDwE9K_NPHZhfN95fcGfeOuIb4Yvl69vPJsckFovKe6x6s05zeeR_w2bdCkuKMh3ABi4V0oSAknytEQrHsw6-YMRap2S-0rchYbMfH_WD6EE6Tb-Sv04jAJZWd03JK07ySvs22YXMO81Cbpf0QoB76ppR-Kctq2s2A4LkHHFuuXM05IK5lM1cddP2k54qAOFN"
-          className="w-full h-full object-cover scale-105 filter brightness-[0.68] contrast-[1.08]"
+          className="w-full h-full object-cover scale-105 filter brightness-[0.75] contrast-[1.05]"
         >
+          <source src="./videos/farmer_sowing_seeds.mp4" type="video/mp4" />
+          <source src="./videos/farmer_field_work.mp4" type="video/mp4" />
           <source src="./videos/tractor_field.webm" type="video/webm" />
-          <source src="./videos/tractor_field_aerial.webm" type="video/webm" />
-          <source src="https://upload.wikimedia.org/wikipedia/commons/transcoded/9/96/John_Deere_tractor_when_plowing_a_field.webm/John_Deere_tractor_when_plowing_a_field.webm.480p.vp9.webm" type="video/webm" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-primary/60 to-black/75 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-primary/55 to-black/75 backdrop-blur-[1px]"></div>
       </div>
 
       <div className="relative z-10 flex flex-col w-full max-w-7xl mx-auto items-center justify-center">
