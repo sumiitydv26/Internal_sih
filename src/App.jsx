@@ -9,11 +9,12 @@ import FarmerDashboard from './views/FarmerDashboard';
 import BuyerMarketplace from './views/BuyerMarketplace';
 import FleetManagement from './views/FleetManagement';
 import AdminCommandCenter from './views/AdminCommandCenter';
+import AdminLoginGate from './views/AdminLoginGate';
 
 export default function App() {
-  const { currentView, navigateTo } = useApp();
+  const { currentView, navigateTo, isAdminAuthenticated } = useApp();
 
-  const isWorkspace = ['farmer', 'buyer', 'fleet', 'admin'].includes(currentView);
+  const isWorkspace = ['farmer', 'buyer', 'fleet'].includes(currentView) || (currentView === 'admin' && isAdminAuthenticated);
 
   return (
     <div className="min-h-screen bg-surface font-body text-on-surface flex flex-col overflow-x-hidden">
@@ -28,7 +29,7 @@ export default function App() {
         {/* Content Container */}
         <main
           className={`flex-1 w-full transition-all overflow-x-hidden ${
-            isWorkspace
+            isWorkspace || currentView === 'admin'
               ? 'max-w-7xl mx-auto pt-20 sm:pt-24 px-4 sm:px-6 lg:px-8 pb-20 md:pb-12'
               : ''
           }`}
@@ -38,7 +39,9 @@ export default function App() {
           {currentView === 'farmer' && <FarmerDashboard />}
           {currentView === 'buyer' && <BuyerMarketplace />}
           {currentView === 'fleet' && <FleetManagement />}
-          {currentView === 'admin' && <AdminCommandCenter />}
+          {currentView === 'admin' && (
+            isAdminAuthenticated ? <AdminCommandCenter /> : <AdminLoginGate />
+          )}
         </main>
       </div>
 

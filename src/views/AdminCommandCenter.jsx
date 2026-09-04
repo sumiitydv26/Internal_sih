@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import Icon from '../components/Icon';
 
 export default function AdminCommandCenter() {
-  const { auditLogs, produceList, activeCluster, setActiveCluster, navigateTo } = useApp();
+  const { auditLogs, produceList, activeCluster, setActiveCluster, navigateTo, logoutAdmin } = useApp();
   const [liveVehiclePos, setLiveVehiclePos] = useState(42);
 
   useEffect(() => {
@@ -46,11 +46,11 @@ export default function AdminCommandCenter() {
             <span>Copy Link</span>
           </button>
           <button
-            onClick={() => navigateTo('landing')}
+            onClick={logoutAdmin}
             className="px-3 py-1.5 rounded-xl bg-primary text-on-primary font-semibold flex items-center gap-1.5 hover:bg-primary/90 transition-colors shadow-sm"
           >
             <Icon name="logout" className="w-3.5 h-3.5 text-white" />
-            <span>Exit Admin</span>
+            <span>Log Out & Exit</span>
           </button>
         </div>
       </div>

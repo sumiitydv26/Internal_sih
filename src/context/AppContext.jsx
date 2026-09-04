@@ -414,6 +414,27 @@ export function AppProvider({ children }) {
     };
   }, []);
 
+  // Admin Authentication State for Protected Link Gateway
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
+    return sessionStorage.getItem('annapurna_admin_auth') === 'true';
+  });
+
+  const loginAdmin = (enteredKey) => {
+    const validKeys = ['admin2026', 'agrichain2026', 'admin'];
+    if (validKeys.includes(enteredKey.trim().toLowerCase())) {
+      setIsAdminAuthenticated(true);
+      sessionStorage.setItem('annapurna_admin_auth', 'true');
+      return true;
+    }
+    return false;
+  };
+
+  const logoutAdmin = () => {
+    setIsAdminAuthenticated(false);
+    sessionStorage.removeItem('annapurna_admin_auth');
+    navigateTo('landing');
+  };
+
   // Navigate helper
   const navigateTo = (view, role = null) => {
     if (role) setActiveRole(role);
@@ -554,6 +575,10 @@ export function AppProvider({ children }) {
         auditLogs,
         inspectingBatch,
         setInspectingBatch,
+        isAdminAuthenticated,
+        setIsAdminAuthenticated,
+        loginAdmin,
+        logoutAdmin,
         resetDemoData
       }}
     >

@@ -3,25 +3,9 @@ import { useApp } from '../context/AppContext';
 import Icon from './Icon';
 
 export default function Navbar() {
-  const { currentView, navigateTo, produceList, setInspectingBatch, auditLogs } = useApp();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { navigateTo, auditLogs } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    const match = produceList.find(p =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.id.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    if (match) {
-      setInspectingBatch(match);
-      setSearchQuery('');
-    } else {
-      navigateTo('buyer');
-    }
-  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/20">
@@ -45,42 +29,8 @@ export default function Navbar() {
         </div>
 
 
-        {/* Search Bar (Tablet / Desktop) */}
-        <form onSubmit={handleSearch} className="hidden md:flex items-center relative flex-1 max-w-[200px] lg:max-w-[240px]">
-          <Icon name="search" className="w-4 h-4 text-on-surface-variant absolute left-3 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search crop, batch..."
-            className="w-full bg-surface-container pl-9 pr-3 py-1.5 rounded-xl text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary border border-transparent transition-all"
-          />
-        </form>
-
-        {/* Right Section: Trace Lot, Role Switcher, Notifications, Profile */}
+        {/* Right Section: Notifications, Profile */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-          {/* Quick Traceability Button */}
-          <button
-            onClick={() => setInspectingBatch(produceList[0])}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-bold border border-outline-variant/30 transition-all shadow-sm"
-            title="Inspect Provenance Passport"
-          >
-            <Icon name="qr_code_2" className="w-4 h-4 text-primary" />
-            <span className="hidden md:inline">Trace Lot</span>
-          </button>
-
-          {/* Login / Sign Up Action Button */}
-          <button
-            onClick={() => navigateTo('login')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all active:scale-95 ${
-              currentView === 'login'
-                ? 'bg-primary-container text-on-primary-container ring-2 ring-primary'
-                : 'bg-primary hover:bg-primary/90 text-on-primary hover:shadow-md'
-            }`}
-          >
-            <Icon name="login" className="w-4 h-4 text-white" />
-            <span>Login / Sign Up</span>
-          </button>
 
           {/* Notifications Dropdown */}
           <div className="relative">
