@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { REGIONAL_ACCOUNTS, REGIONS_DATA } from '../data/regionalData';
+import { apiService } from '../services/apiService';
 
 const AppContext = createContext();
 
@@ -415,6 +416,62 @@ export function AppProvider({ children }) {
     }
   });
 
+  const [isSupabaseConnected, setIsSupabaseConnected] = useState(apiService.isConfigured());
+
+  // Load data from Supabase and subscribe to live changes (with resilient fallback)
+  useEffect(() => {
+    let unsubscribe = () => {};
+
+    const initializeData = async () => {
+      if (apiService.isConfigured()) {
+        try {
+          const [remoteProduce, remoteOrders, remoteFleet, remoteLogs] = await Promise.all([
+            apiService.fetchProduce(produceList),
+            apiService.fetchOrders(orderList),
+            apiService.fetchFleet(fleetList),
+            apiService.fetchAuditLogs(auditLogs)
+          ]);
+          if (remoteProduce && remoteProduce.length > 0) setProduceList(remoteProduce);
+          if (remoteOrders && remoteOrders.length > 0) setOrderList(remoteOrders);
+          if (remoteFleet && remoteFleet.length > 0) setFleetList(remoteFleet);
+          if (remoteLogs && remoteLogs.length > 0) setAuditLogs(remoteLogs);
+          setIsSupabaseConnected(true);
+        } catch (err) {
+          console.warn('Initial Supabase sync failed, using fallback data:', err);
+        }
+      }
+
+      // Realtime multi-user subscription
+      unsubscribe = apiService.subscribeToChanges({
+        onProduceChange: (payload) => {
+          if (payload.eventType === 'INSERT') {
+            apiService.fetchProduce(produceList).then(setProduceList);
+          } else if (payload.eventType === 'UPDATE') {
+            setProduceList(prev => prev.map(p => p.id === payload.new.id ? { ...p, ...payload.new } : p));
+          }
+        },
+        onOrderChange: (payload) => {
+          if (payload.eventType === 'INSERT') {
+            apiService.fetchOrders(orderList).then(setOrderList);
+          }
+        },
+        onFleetChange: (payload) => {
+          if (payload.eventType === 'UPDATE') {
+            setFleetList(prev => prev.map(f => f.id === payload.new.id ? { ...f, ...payload.new } : f));
+          }
+        },
+        onLogChange: (payload) => {
+          if (payload.eventType === 'INSERT') {
+            apiService.fetchAuditLogs(auditLogs).then(setAuditLogs);
+          }
+        }
+      });
+    };
+
+    initializeData();
+    return () => unsubscribe();
+  }, []);
+
   // Active Traceability Modal State
   const [inspectingBatch, setInspectingBatch] = useState(null);
 
@@ -600,7 +657,7 @@ export function AppProvider({ children }) {
   };
 
   // Farmer actions
-  const addProduce = (newCrop) => {
+  const addProduce = async (newCrop) => {
     const item = {
       ...newCrop,
       id: `PROD-${Date.now().toString().slice(-4)}`,
@@ -625,10 +682,18 @@ export function AppProvider({ children }) {
       badgeClass: "bg-primary-container/10 text-primary"
     };
     setAuditLogs(prev => [log, ...prev]);
+
+    // Sync to Supabase in background
+    try {
+      await apiService.createProduce(item);
+      await apiService.logAudit(log);
+    } catch (e) {
+      console.warn('Background Supabase sync notice:', e);
+    }
   };
 
   // Buyer actions
-  const placeBulkOrder = (orderData) => {
+  const placeBulkOrder = async (orderData) => {
     const newOrder = {
       id: `ORD-2026-${Math.floor(1000 + Math.random() * 9000)}`,
       ...orderData,
@@ -664,6 +729,14 @@ export function AppProvider({ children }) {
       badgeClass: "bg-secondary-container/40 text-secondary"
     };
     setAuditLogs(prev => [log, ...prev]);
+
+    // Sync to Supabase in background
+    try {
+      await apiService.createOrder(newOrder);
+      await apiService.logAudit(log);
+    } catch (e) {
+      console.warn('Background Supabase sync notice:', e);
+    }
 
     return newOrder;
   };
@@ -735,7 +808,8 @@ export function AppProvider({ children }) {
         logoutAdmin,
         REGIONS_DATA,
         REGIONAL_ACCOUNTS,
-        resetDemoData
+        resetDemoData,
+        isSupabaseConnected
       }}
     >
       {children}

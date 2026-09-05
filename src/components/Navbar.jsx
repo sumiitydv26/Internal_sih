@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import Icon from './Icon';
 
 export default function Navbar() {
-  const { navigateTo, auditLogs } = useApp();
+  const { navigateTo, auditLogs, isSupabaseConnected } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -29,8 +29,28 @@ export default function Navbar() {
         </div>
 
 
-        {/* Right Section: Notifications, Profile */}
+        {/* Right Section: Cloud DB Status, Notifications, Mobile Menu */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          {/* Cloud Database Status Pill */}
+          <div
+            className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border transition-all ${
+              isSupabaseConnected
+                ? 'bg-secondary-container/30 text-secondary border-secondary/30'
+                : 'bg-surface-container-high text-on-surface-variant border-outline-variant/30'
+            }`}
+            title={
+              isSupabaseConnected
+                ? 'Supabase Cloud Database connected with Realtime synchronization'
+                : 'Local resilient engine active. Add Supabase keys to .env for cloud persistence.'
+            }
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isSupabaseConnected ? 'bg-secondary animate-pulse' : 'bg-on-surface-variant/40'
+              }`}
+            ></span>
+            <span>{isSupabaseConnected ? 'Supabase Live' : 'Demo DB Mode'}</span>
+          </div>
 
           {/* Notifications Dropdown */}
           <div className="relative">
