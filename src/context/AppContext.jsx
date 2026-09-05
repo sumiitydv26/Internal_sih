@@ -328,11 +328,39 @@ export function AppProvider({ children }) {
   const VALID_VIEWS = ['landing', 'login', 'farmer', 'buyer', 'fleet', 'admin'];
   const VALID_ROLES = ['farmer', 'buyer', 'transport', 'admin'];
 
+  const isTargetingAdminRoute = () => {
+    if (typeof window === 'undefined') return false;
+    const hash = (window.location.hash || '').toLowerCase();
+    const search = (window.location.search || '').toLowerCase();
+    const path = (window.location.pathname || '').toLowerCase();
+    return (
+      hash === '#admin' ||
+      hash === '#/admin' ||
+      hash.startsWith('#admin') ||
+      search.includes('admin=true') ||
+      search.includes('portal=admin') ||
+      search.includes('view=admin') ||
+      path.endsWith('/admin')
+    );
+  };
+
   // Active view & role state with corruption guards
   const [currentView, setCurrentView] = useState(() => {
     try {
+      if (isTargetingAdminRoute()) {
+        return 'admin';
+      }
+
+      if (typeof window !== 'undefined') {
+        const hash = (window.location.hash || '').toLowerCase();
+        if (hash === '#farmer') return 'farmer';
+        if (hash === '#buyer') return 'buyer';
+        if (hash === '#fleet') return 'fleet';
+        if (hash === '#login') return 'login';
+      }
+
       const saved = localStorage.getItem('annapurna_view');
-      return (saved && VALID_VIEWS.includes(saved)) ? saved : 'landing';
+      return (saved && saved !== 'admin' && VALID_VIEWS.includes(saved)) ? saved : 'landing';
     } catch {
       return 'landing';
     }
@@ -340,8 +368,9 @@ export function AppProvider({ children }) {
 
   const [activeRole, setActiveRole] = useState(() => {
     try {
+      if (isTargetingAdminRoute()) return 'admin';
       const saved = localStorage.getItem('annapurna_role');
-      return (saved && VALID_ROLES.includes(saved)) ? saved : 'farmer';
+      return (saved && saved !== 'admin' && VALID_ROLES.includes(saved)) ? saved : 'farmer';
     } catch {
       return 'farmer';
     }
@@ -389,13 +418,25 @@ export function AppProvider({ children }) {
   // Active Traceability Modal State
   const [inspectingBatch, setInspectingBatch] = useState(null);
 
-  // Sync to localStorage
+  // Sync to localStorage (never persist admin as default public view)
   useEffect(() => {
-    localStorage.setItem('annapurna_view', currentView);
+    try {
+      if (currentView !== 'admin') {
+        localStorage.setItem('annapurna_view', currentView);
+      } else {
+        localStorage.setItem('annapurna_view', 'landing');
+      }
+    } catch {}
   }, [currentView]);
 
   useEffect(() => {
-    localStorage.setItem('annapurna_role', activeRole);
+    try {
+      if (activeRole !== 'admin') {
+        localStorage.setItem('annapurna_role', activeRole);
+      } else {
+        localStorage.setItem('annapurna_role', 'farmer');
+      }
+    } catch {}
   }, [activeRole]);
 
   useEffect(() => {
@@ -414,24 +455,42 @@ export function AppProvider({ children }) {
     localStorage.setItem('annapurna_audit', JSON.stringify(auditLogs));
   }, [auditLogs]);
 
-  // Handle URL hash or param routing for direct Admin Portal access via specific link
+  // Handle URL hash or param routing: Admin Portal ONLY when explicitly specified in URL
   useEffect(() => {
     const handleUrlRoute = () => {
-      const hash = (window.location.hash || '').toLowerCase();
-      const search = (window.location.search || '').toLowerCase();
-      const path = (window.location.pathname || '').toLowerCase();
+      const isTargetingAdmin = isTargetingAdminRoute();
 
-      if (
-        hash === '#admin' ||
-        hash === '#/admin' ||
-        hash.startsWith('#admin') ||
-        search.includes('admin=true') ||
-        search.includes('portal=admin') ||
-        search.includes('view=admin') ||
-        path.endsWith('/admin')
-      ) {
+      if (isTargetingAdmin) {
         setCurrentView('admin');
         setActiveRole('admin');
+      } else {
+        const hash = (window.location.hash || '').toLowerCase();
+        if (hash === '#farmer') {
+          setCurrentView('farmer');
+          setActiveRole('farmer');
+        } else if (hash === '#buyer') {
+          setCurrentView('buyer');
+          setActiveRole('buyer');
+        } else if (hash === '#fleet') {
+          setCurrentView('fleet');
+          setActiveRole('transport');
+        } else if (hash === '#login') {
+          setCurrentView('login');
+        } else {
+          // If on public URL and currently at admin, reset to landing
+          setCurrentView(prev => (prev === 'admin' ? 'landing' : prev));
+          setActiveRole(prev => (prev === 'admin' ? 'farmer' : prev));
+        }
+
+        // Clear any stale admin view in storage
+        try {
+          if (localStorage.getItem('annapurna_view') === 'admin') {
+            localStorage.setItem('annapurna_view', 'landing');
+          }
+          if (localStorage.getItem('annapurna_role') === 'admin') {
+            localStorage.setItem('annapurna_role', 'farmer');
+          }
+        } catch {}
       }
     };
 
